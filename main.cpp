@@ -1,9 +1,10 @@
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <map>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -14,17 +15,11 @@
 
 using std::string;
 
-#define MAX(X, Y) (((X) < (Y)) ? (Y) : (X))
-
-static std::size_t size_t_max(std::size_t a, std::size_t b) {
-	return a < b ? b : a;
-}
-
 // Program flags:
 static string FLAG_LONG_NUMBER_OF_ITERATIONS  = "--iterations";
 static string FLAG_SHORT_NUMBER_OF_ITERATIONS = "-i";
 static string FLAG_LONG_PRIORITY_CLASS        = "--priority-class";
-static string FLAG_SHORT_PRIORITY_CLASS       = "-P";
+static string FLAG_SHORT_PRIORITY_CLASS       = "-p";
 static string FLAG_LONG_THREAD_PRIORITY       = "--thread-priority";
 static string FLAG_SHORT_THREAD_PRIORITY      = "-t";
 
@@ -197,19 +192,18 @@ private:
 	bool m_priority_class_flag_present = false;
 	bool m_thread_priority_flag_present = false;
 
-	char** arguments;
-	int tokens_omitted = 1; // Omit the program name from the command line.
-	std::unordered_map<string, std::function<void(const CommandLine&, int, int)>> m_flag_processor_map;
+	char** m_argv;
+	int m_argc;
+	int m_argument_index = 1; // Omit the program name from the command line.
+	std::unordered_map<string, std::function<void(const CommandLine&)>> m_flag_processor_map;
 
 	size_t m_iterations = DEFAULT_M_ITERATIONS;
 	DWORD m_priority_class = DEFAULT_M_PRIORITY_CLASS;
 	int m_thread_priority = DEFAULT_M_THREAD_PRIORITY;
 
-	void parseCommandLine(int argc, char* argv[]) {
-		arguments = argv;
-
-		while (tokens_omitted < argc) {
-			processFlagPair(tokens_omitted, argc);
+	void parseCommandLine() {
+		while (m_argument_index < m_argc) {
+			processFlagPair();
 		}
 	}
 
@@ -220,63 +214,79 @@ private:
 		m_flag_processor_map[FLAG_SHORT_NUMBER_OF_ITERATIONS] = function_flag_iterations;
 	}
 
-	void processFlagPair(int tokens_ommited, int argc) {
-		
-		string flag_value = arguments[tokens_omitted];
-
-		// First check that the currently indexed flag is correct:
-		if (!flag_set.contains(flag_value)) {
+	void checkFlagIsValid(string& flag) {
+		if (!flag_set.contains(flag)) {
 			std::stringstream ss;
-			ss << "Unknown flag: " << arguments[tokens_ommited];
+			ss << "Unknown flag: " << m_argv[m_argument_index] << ".";
 			throw std::logic_error{ ss.str() };
 		}
+	}
 
-		tokens_ommited++; // Omit the flag.
-
-		if (tokens_ommited == argc - 1) {
+	void checkMoreParametersAvailable() {
+		if (m_argument_index == m_argc) {
 			// Once here, the last flag has no value:
 			std::stringstream ss;
-			ss << "No value for the flag '" << flag_value << "'.\n"
-			throw std::logic_error{ ss.str() }
+			ss << "No value for the flag '" << m_argv[m_argument_index - 1] << ".";
+			throw std::logic_error{ ss.str() };
 		}
+	}
 
-		
+	void processFlagPair() {
+		string flag = m_argv[m_argument_index++];
+
+		// First check that the currently indexed flag is correct:
+		checkFlagIsValid(flag);
+
+		// Check that there is more parameters in the command line:
+
+		string flag_value = m_argv[m_argument_index];
+
+		checkFlagIsValid(flag_valu
+
+		m_argument_index++; // Omit the flag.
+
+
+
 	}
 
 	void processIterationFlags() {
 		std::stringstream ss;
-		ss << arguments[tokens_omitted++];
+		ss << m_argv[m_argument_index++];
 		ss >> m_iterations;
 	}
 
 	void processPriorityClassFlags() {
-		auto& pair = priority_class_name_map.find(arguments[tokens_omitted]);
+		auto pair = priority_class_name_map.find(m_argv[m_argument_index]);
 
 		if (pair == priority_class_name_map.cend()) {
 			std::stringstream ss;
-			ss << arguments[tokens_omitted++];
+			ss << m_argv[m_argument_index];
 			ss >> m_priority_class;
-		} else {
+		}
+		else {
 			m_priority_class = pair->second;
 		}
+
+		m_argument_index += 2;
 	}
 
 	void processThreadPriorityFlags() {
-		auto& pair = thread_priority_name_map.find(arguments[tokens_omitted]);
+		auto pair = thread_priority_name_map.find(m_argv[m_argument_index]);
 
 		if (pair == thread_priority_name_map.cend()) {
 			std::stringstream ss;
-			ss << arguments[tokens_omitted++];
+			ss << m_argv[m_argument_index++];
 			ss >> m_thread_priority;
-		} else {
+		}
+		else {
 			m_thread_priority = pair->second;
 		}
 	}
 
 public:
-	CommandLine(int argc, char* argv[]) {
+	CommandLine(int argc, char* argv[]) : m_argc{ argc }, m_argv{ argv } {
 		loadDispatchMap();
-		parseCommandLine(argc, argv);
+		parseCommandLine();
 	}
 
 	size_t getNumberOfIterations() {
@@ -308,7 +318,7 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < 10 * 1000; i++) {
 		ULONGLONG tb = GetTickCount64();
 		ULONGLONG duration = tb - ta;
-		maximumDuration = MAX(maximumDuration, duration);
+		maximumDuration = max(maximumDuration, duration);
 	}
 
 	printf("%llu\n", maximumDuration);
