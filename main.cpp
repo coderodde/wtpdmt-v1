@@ -1,11 +1,13 @@
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <map>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <windows.h>
@@ -143,7 +145,7 @@ static int GetThreadPriorityFromString(string& threadPriorityName) {
 }
 
 template<class Value>
-static size_t GetMapStringKeyMaximumLength(std::unordered_map<string, Value>& map) {
+static size_t GetMapStringKeyMaximumLength(std::map<string, Value>& map) {
 	size_t maximum_string_length = 0;
 
 	for (auto& i : map) {
@@ -195,9 +197,9 @@ private:
 	bool m_priority_class_flag_present = false;
 	bool m_thread_priority_flag_present = false;
 
-	char* arguments[];
+	char** arguments;
 	int tokens_omitted = 1; // Omit the program name from the command line.
-	std::unordered_map<string, std::function<void(const& CommandLine, int, int)> m_flag_processor_map;
+	std::unordered_map<string, std::function<void(const CommandLine&, int, int)>> m_flag_processor_map;
 
 	size_t m_iterations = DEFAULT_M_ITERATIONS;
 	DWORD m_priority_class = DEFAULT_M_PRIORITY_CLASS;
@@ -206,19 +208,26 @@ private:
 	void parseCommandLine(int argc, char* argv[]) {
 		arguments = argv;
 
-		while (tokens_ommited < argc) {
-			processFlagPair(tokens_ommited, argc);
+		while (tokens_omitted < argc) {
+			processFlagPair(tokens_omitted, argc);
 		}
 	}
 
-	void processFlagPair(int tokens_ommited, int argc, char* argv[]) {
+	void loadDispatchMap() {
+		std::function<void(const CommandLine&)> function_flag_iterations = &CommandLine::processIterationFlags;
+
+		m_flag_processor_map[FLAG_LONG_NUMBER_OF_ITERATIONS] = function_flag_iterations;
+		m_flag_processor_map[FLAG_SHORT_NUMBER_OF_ITERATIONS] = function_flag_iterations;
+	}
+
+	void processFlagPair(int tokens_ommited, int argc) {
 		
-		string flag_value = argv[tokens_omitted];
+		string flag_value = arguments[tokens_omitted];
 
 		// First check that the currently indexed flag is correct:
 		if (!flag_set.contains(flag_value)) {
 			std::stringstream ss;
-			ss << "Unknown flag: " << argv[tokens_ommited];
+			ss << "Unknown flag: " << arguments[tokens_ommited];
 			throw std::logic_error{ ss.str() };
 		}
 
@@ -248,7 +257,7 @@ private:
 			ss << arguments[tokens_omitted++];
 			ss >> m_priority_class;
 		} else {
-			m_priority_class = pair.second;
+			m_priority_class = pair->second;
 		}
 	}
 
@@ -260,7 +269,7 @@ private:
 			ss << arguments[tokens_omitted++];
 			ss >> m_thread_priority;
 		} else {
-			m_thread_priority = pair.second;
+			m_thread_priority = pair->second;
 		}
 	}
 
