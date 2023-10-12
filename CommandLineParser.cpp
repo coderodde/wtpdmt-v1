@@ -1,4 +1,4 @@
-#include "CommandLineParser.h"
+/*#include "CommandLineParser.h"
 
 class CommandLineParser {
 private:
@@ -117,3 +117,4 @@ public:
 };
 
 #endif // COMMAND_LINE_PARSER_HPP
+*/
