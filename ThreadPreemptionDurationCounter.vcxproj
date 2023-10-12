@@ -131,6 +131,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CommandLineParser.h" />
+    <ClInclude Include="flags.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CommandLineParser.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

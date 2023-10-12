@@ -1,3 +1,4 @@
+#include "flags.h"
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
@@ -16,14 +17,6 @@
 
 using std::string;
 
-// Program flags:
-static string FLAG_LONG_NUMBER_OF_ITERATIONS  = "--iterations";
-static string FLAG_SHORT_NUMBER_OF_ITERATIONS = "-i";
-static string FLAG_LONG_PRIORITY_CLASS        = "--priority-class";
-static string FLAG_SHORT_PRIORITY_CLASS       = "-p";
-static string FLAG_LONG_THREAD_PRIORITY       = "--thread-priority";
-static string FLAG_SHORT_THREAD_PRIORITY      = "-t";
-
 static std::unordered_set<string> flag_set;
 
 static void LoadProgramFlags() {
@@ -34,18 +27,6 @@ static void LoadProgramFlags() {
 	flag_set.emplace(FLAG_LONG_THREAD_PRIORITY);
 	flag_set.emplace(FLAG_SHORT_THREAD_PRIORITY);
 }
-
-// static std::unordered_map<std::function<void, const 
-
-// Priority class names:
-static string ABOVE_NORMAL_PRIORITY_CLASS_STR   = "ABOVE_NORMAL_PRIORITY_CLASS";   // 0x00008000
-static string BELOW_NORMAL_PRIORITY_CLASS_STR   = "BELOW_NORMAL_PRIORITY_CLASS";   // 0x00004000
-static string HIGH_PRIORITY_CLASS_STR           = "HIGH_PRIORITY_CLASS";           // 0x00000080
-static string IDLE_PRIORITY_CLASS_STR           = "IDLE_PRIORITY_CLASS";           // 0x00000040
-static string NORMAL_PRIORITY_CLASS_STR         = "NORMAL_PRIORITY_CLASS";         // 0x00000020
-static string PROCESS_MODE_BACKGROUND_BEGIN_STR = "PROCESS_MODE_BACKGROUND_BEGIN"; // 0x00100000
-static string PROCESS_MODE_BACKGROUND_END_STR   = "PROCESS_MODE_BACKGROUND_END";   // 0x00200000
-static string REALTIME_PRIORITY_CLASS_STR       = "REALTIME_PRIORITY_CLASS";       // 0x00000100
 
 static std::map<string, DWORD> priority_class_name_map;
 static std::unordered_set<DWORD> class_number_set;
@@ -144,7 +125,7 @@ template<class Value>
 static size_t GetMapStringKeyMaximumLength(std::map<string, Value>& map) {
 	size_t maximum_string_length = 0;
 
-	for (auto& i : map) {
+	for (const auto& i : map) {
 		maximum_string_length = max(maximum_string_length, i.first.length());
 	}
 
@@ -152,7 +133,7 @@ static size_t GetMapStringKeyMaximumLength(std::map<string, Value>& map) {
 }
 
 void PrintHelp(string& programNameArgument) {
-	size_t maximum_class_name_length = GetMapStringKeyMaximumLength(priority_class_name_map);
+	size_t maximum_class_name_length           = GetMapStringKeyMaximumLength(priority_class_name_map);
 	size_t maximum_thread_priority_name_length = GetMapStringKeyMaximumLength(thread_priority_name_map);
 
 	string programFileName = std::filesystem::path(programNameArgument).filename().string();
@@ -197,122 +178,9 @@ void PrintHelp(string& programNameArgument) {
 	std::cout << "\n";
 }
 
-class CommandLine {
-private:
-
-	static const size_t DEFAULT_M_ITERATIONS      = 10 * 1000 * 1000;
-	static const DWORD  DEFAULT_M_PRIORITY_CLASS  = NORMAL_PRIORITY_CLASS;
-	static const int    DEFAULT_M_THREAD_PRIORITY = THREAD_PRIORITY_NORMAL;
-
-	bool m_iteration_flag_present       = false;
-	bool m_priority_class_flag_present  = false;
-	bool m_thread_priority_flag_present = false;
-
-	char** m_argv;
-	int m_argc;
-	int m_argument_index = 1; // ... = 1: Omit the program name from the command line.
-	std::unordered_map<string, std::function<void(CommandLine&)>> m_flag_processor_map;
-
-	size_t m_iterations    = DEFAULT_M_ITERATIONS;
-	DWORD m_priority_class = DEFAULT_M_PRIORITY_CLASS;
-	int m_thread_priority  = DEFAULT_M_THREAD_PRIORITY;
-
-	void parseCommandLine() {
-		while (m_argument_index < m_argc) {
-			processFlagPair();
-		}
-	}
-
-	void loadDispatchMap() {
-		std::function<void(CommandLine&)> function_flag_iterations = &CommandLine::processIterationFlags;
-
-		m_flag_processor_map[FLAG_LONG_NUMBER_OF_ITERATIONS] = function_flag_iterations;
-		m_flag_processor_map[FLAG_SHORT_NUMBER_OF_ITERATIONS] = function_flag_iterations;
-	}
-
-	void checkFlagIsValid(string& flag) {
-		if (!flag_set.contains(flag)) {
-			std::stringstream ss;
-			ss << "Unknown flag: " << m_argv[m_argument_index] << ".";
-			throw std::logic_error{ ss.str() };
-		}
-	}
-
-	void checkMoreParametersAvailable() {
-		if (m_argument_index == m_argc) {
-			// Once here, the last flag has no value:
-			std::stringstream ss;
-			ss << "No value for the flag '" << m_argv[m_argument_index - 1] << ".";
-			throw std::logic_error{ ss.str() };
-		}
-	}
-
-	void processFlagPair() {
-		string flag = m_argv[m_argument_index++];
-
-		// First check that the currently indexed flag is correct:
-		checkFlagIsValid(flag);
-
-		// Check that there is more parameters in the command line:
-		checkMoreParametersAvailable();
-
-
-	}
-
-	void processIterationFlags() {
-		std::stringstream ss;
-		ss << m_argv[m_argument_index++];
-		ss >> m_iterations;
-	}
-
-	void processPriorityClassFlags() {
-		auto pair = priority_class_name_map.find(m_argv[m_argument_index]);
-
-		if (pair == priority_class_name_map.cend()) {
-			std::stringstream ss;
-			ss << m_argv[m_argument_index];
-			ss >> m_priority_class;
-		}
-		else {
-			m_priority_class = pair->second;
-		}
-
-		m_argument_index += 2;
-	}
-
-	void processThreadPriorityFlags() {
-		auto pair = thread_priority_name_map.find(m_argv[m_argument_index]);
-
-		if (pair == thread_priority_name_map.cend()) {
-			std::stringstream ss;
-			ss << m_argv[m_argument_index++];
-			ss >> m_thread_priority;
-		}
-		else {
-			m_thread_priority = pair->second;
-		}
-	}
-
-public:
-	CommandLine(int argc, char* argv[]) : m_argc{ argc }, m_argv{ argv } {
-		loadDispatchMap();
-		parseCommandLine();
-	}
-
-	size_t getNumberOfIterations() {
-		return m_iterations;
-	}
-
-	DWORD getPriorityClass() {
-		return m_priority_class;
-	}
-
-	int getThreadPriority() {
-		return m_thread_priority;
-	}
-};
-
 int main(int argc, char* argv[]) {
+	CommandLineParser(argc, argv);
+
 	LoadPriorityClassNames();
 	LoadPriorityClassNumberSet();
 
