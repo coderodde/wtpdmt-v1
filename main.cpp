@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -144,62 +145,77 @@ static size_t GetMapStringKeyMaximumLength(std::map<string, Value>& map) {
 	size_t maximum_string_length = 0;
 
 	for (auto& i : map) {
-		maximum_string_length = size_t_max(maximum_string_length, 
-										   i->first.length());
+		maximum_string_length = max(maximum_string_length, i.first.length());
 	}
 
 	return maximum_string_length;
 }
 
-void PrintHelp(string& programName) {
+void PrintHelp(string& programNameArgument) {
 	size_t maximum_class_name_length = GetMapStringKeyMaximumLength(priority_class_name_map);
 	size_t maximum_thread_priority_name_length = GetMapStringKeyMaximumLength(thread_priority_name_map);
 
-	std::cout << programName
+	string programFileName = std::filesystem::path(programNameArgument).filename().string();
+
+	std::cout << programFileName
 		      << " [--class = <CLASS>] [--thread = <THREAD>]\n"
-		      << "where:\n"
+		      << "where:\n\n"
 		      << "  <CLASS> is one of: \n";
 
 	std::cout << std::hex;	
-	std::cout << std::setw(maximum_class_name_length);
 
 	for (auto& i : priority_class_name_map) {
-		std::cout << i.first
-				  << " Sets the process class to "
+		std::cout << "    "
+			      << std::setw(maximum_class_name_length)
+			      << std::left 
+			      << i.first
+				  << " -- Sets the process class to 0x"
 				  << i.second 
 				  << "\n";
 	}
 
-	std::cout << "  <THREAD> is one of:\n";
-	std::cout << std::setw(maximum_thread_priority_name_length);
+	std::cout << "\n  <THREAD> is one of:\n";
 
 	for (auto& i : thread_priority_name_map) {
-		std::cout << i.first
-	      		  << " Sets the thread priority to "
-				  << i.second
-				  << "\n";
+		std::cout << "    "
+			      << std::setw(maximum_thread_priority_name_length)
+			      << std::left
+				  << i.first
+			      << " -- Sets the thread priority to ";
+
+		int priority = i.second;
+
+		if (priority >= -15 && priority <= 15) {
+			std::cout << std::dec;
+		} else {
+			std::cout << "0x" << std::hex;
+		}
+
+		std::cout << priority << "\n";
 	}
+
+	std::cout << "\n";
 }
 
 class CommandLine {
 private:
 
-	static const size_t DEFAULT_M_ITERATIONS = 10 * 1000 * 1000;
-	static const DWORD DEFAULT_M_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS;
-	static const int DEFAULT_M_THREAD_PRIORITY = THREAD_PRIORITY_NORMAL;
+	static const size_t DEFAULT_M_ITERATIONS      = 10 * 1000 * 1000;
+	static const DWORD  DEFAULT_M_PRIORITY_CLASS  = NORMAL_PRIORITY_CLASS;
+	static const int    DEFAULT_M_THREAD_PRIORITY = THREAD_PRIORITY_NORMAL;
 
-	bool m_iteration_flag_present = false;
-	bool m_priority_class_flag_present = false;
+	bool m_iteration_flag_present       = false;
+	bool m_priority_class_flag_present  = false;
 	bool m_thread_priority_flag_present = false;
 
 	char** m_argv;
 	int m_argc;
-	int m_argument_index = 1; // Omit the program name from the command line.
-	std::unordered_map<string, std::function<void(const CommandLine&)>> m_flag_processor_map;
+	int m_argument_index = 1; // ... = 1: Omit the program name from the command line.
+	std::unordered_map<string, std::function<void(CommandLine&)>> m_flag_processor_map;
 
-	size_t m_iterations = DEFAULT_M_ITERATIONS;
+	size_t m_iterations    = DEFAULT_M_ITERATIONS;
 	DWORD m_priority_class = DEFAULT_M_PRIORITY_CLASS;
-	int m_thread_priority = DEFAULT_M_THREAD_PRIORITY;
+	int m_thread_priority  = DEFAULT_M_THREAD_PRIORITY;
 
 	void parseCommandLine() {
 		while (m_argument_index < m_argc) {
@@ -208,7 +224,7 @@ private:
 	}
 
 	void loadDispatchMap() {
-		std::function<void(const CommandLine&)> function_flag_iterations = &CommandLine::processIterationFlags;
+		std::function<void(CommandLine&)> function_flag_iterations = &CommandLine::processIterationFlags;
 
 		m_flag_processor_map[FLAG_LONG_NUMBER_OF_ITERATIONS] = function_flag_iterations;
 		m_flag_processor_map[FLAG_SHORT_NUMBER_OF_ITERATIONS] = function_flag_iterations;
@@ -238,13 +254,7 @@ private:
 		checkFlagIsValid(flag);
 
 		// Check that there is more parameters in the command line:
-
-		string flag_value = m_argv[m_argument_index];
-
-		checkFlagIsValid(flag_valu
-
-		m_argument_index++; // Omit the flag.
-
+		checkMoreParametersAvailable();
 
 
 	}
