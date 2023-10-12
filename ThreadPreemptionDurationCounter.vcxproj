@@ -24,6 +24,7 @@
     <ProjectGuid>{0418f9ac-74c7-426d-8ed7-a0972fadfab7}</ProjectGuid>
     <RootNamespace>ThreadPreemptionDurationCounter</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>wtpdmt</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -133,7 +134,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandLineParser.h" />
-    <ClInclude Include="flags.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandLineParser.cpp" />

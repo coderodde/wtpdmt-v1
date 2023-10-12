@@ -26,8 +26,5 @@
     <ClInclude Include="CommandLineParser.cpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="flags.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

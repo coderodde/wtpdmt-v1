@@ -43,7 +43,7 @@ static void LoadPriorityClassNames() {
 }
 
 static void LoadPriorityClassNumberSet() {
-	class_number_set.emplace(0x8000);
+	.emplace(0x8000);
 	class_number_set.emplace(0x4000);
 	class_number_set.emplace(0x80);
 	class_number_set.emplace(0x40);
@@ -122,49 +122,7 @@ static size_t GetMapStringKeyMaximumLength(std::map<string, Value>& map) {
 }
 
 void PrintHelp(string& programNameArgument) {
-	size_t maximum_class_name_length           = GetMapStringKeyMaximumLength(priority_class_name_map);
-	size_t maximum_thread_priority_name_length = GetMapStringKeyMaximumLength(thread_priority_name_map);
-
-	string programFileName = std::filesystem::path(programNameArgument).filename().string();
-
-	std::cout << programFileName
-		      << " [--class = <CLASS>] [--thread = <THREAD>]\n"
-		      << "where:\n\n"
-		      << "  <CLASS> is one of: \n";
-
-	std::cout << std::hex;	
-
-	for (auto& i : priority_class_name_map) {
-		std::cout << "    "
-			      << std::setw(maximum_class_name_length)
-			      << std::left 
-			      << i.first
-				  << " -- Sets the process class to 0x"
-				  << i.second 
-				  << "\n";
-	}
-
-	std::cout << "\n  <THREAD> is one of:\n";
-
-	for (auto& i : thread_priority_name_map) {
-		std::cout << "    "
-			      << std::setw(maximum_thread_priority_name_length)
-			      << std::left
-				  << i.first
-			      << " -- Sets the thread priority to ";
-
-		int priority = i.second;
-
-		if (priority >= -15 && priority <= 15) {
-			std::cout << std::dec;
-		} else {
-			std::cout << "0x" << std::hex;
-		}
-
-		std::cout << priority << "\n";
-	}
-
-	std::cout << "\n";
+	
 }
 
 int main(int argc, char* argv[]) {

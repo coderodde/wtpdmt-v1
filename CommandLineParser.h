@@ -38,15 +38,15 @@ static string THREAD_PRIORITY_NORMAL_STR        = "THREAD_PRIORITY_NORMAL";     
 static string THREAD_PRIORITY_TIME_CRITICAL_STR = "THREAD_PRIORITY_TIME_CRITICAL"; // 15
 
 // Program flags:
-static string FLAG_LONG_HELP            = "--help";
-static string FLAG_LONG_ITERATIONS      = "--iterations";
-static string FLAG_LONG_PRIORITY_CLASS  = "--priority-class";
-static string FLAG_LONG_THREAD_PRIORITY = "--thread-priority";
+static string FLAG_LONG_HELP                 = "--help";
+static string FLAG_LONG_NUMBER_OF_ITERATIONS = "--iterations";
+static string FLAG_LONG_PRIORITY_CLASS       = "--priority-class";
+static string FLAG_LONG_THREAD_PRIORITY      = "--thread-priority";
 
-static string FLAG_SHORT_HELP            = "-h";
-static string FLAG_SHORT_ITERATIONS	     = "-i";
-static string FLAG_SHORT_PRIORITY_CLASS  = "-p";
-static string FLAG_SHORT_THREAD_PRIORITY = "-t";
+static string FLAG_SHORT_HELP                 = "-h";
+static string FLAG_SHORT_NUMBER_OF_ITERATIONS = "-i";
+static string FLAG_SHORT_PRIORITY_CLASS       = "-p";
+static string FLAG_SHORT_THREAD_PRIORITY      = "-t";
 
 static const size_t DEFAULT_M_ITERATIONS      = 10 * 1000 * 1000;
 static const DWORD  DEFAULT_M_PRIORITY_CLASS  = NORMAL_PRIORITY_CLASS;
@@ -261,7 +261,7 @@ private:
 		if (m_argument_index == m_argc) {
 			// Once here, the last flag has no value:
 			std::stringstream ss;
-			ss << "No value for the flag '" << m_argv[m_argument_index - 1] << ".";
+			ss << "No value for the flag '" << m_argv[m_argc - 1] << ".";
 			throw std::logic_error{ ss.str() };
 		}
 	}
@@ -275,7 +275,8 @@ private:
 		// Check that there is more parameters in the command line:
 		checkMoreParametersAvailable();
 
-		
+		// Process the flag:
+		(m_flag_processor_map[flag])(*this);
 	}
 
 	void processHelpFlags() {
